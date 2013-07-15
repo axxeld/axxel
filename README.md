@@ -9,8 +9,8 @@ faster and scalable way.
 Axxel works as a daemon which interacts with clients using JSON messages. Networking in Axxel is powered
 by libevent2 (as Chrome/Memcached/Tor) providing non-blocking/asynchronous I/O.
 
-Axxel does not have persistence, it uses in-memory HashTables allowing clients to perform 
-queries over the Access-Control-Lists with high performance.
+Axxel does not have persistence, it uses in-memory [HashTables](http://en.wikipedia.org/wiki/Hash_table) 
+allowing clients to perform queries over the Access-Control-Lists with high performance.
 
 #### Requirements
 We need some packages previously installed.
