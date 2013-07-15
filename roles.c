@@ -11,7 +11,9 @@
  * Authors: Andres Gutierrez <andres@phalconphp.com>
  */
 
-#include "json-c/json.h"
+ #include "stdlib.h"
+
+#include "json/json.h"
 #include "hash.h"
 
 #include "axxel.h"
@@ -44,7 +46,7 @@ json_object *p_addrole(json_object *params){
 	name_length = json_object_get_string_len(name_obj);
 
 	if (!acl->roles) {
-		acl->roles = p_hash_table_create(16, NULL);
+		acl->roles = p_hash_table_create(17, NULL);
 	} else {
 		role = p_hash_table_get(acl->roles, name, name_length);
 	}
@@ -82,6 +84,10 @@ json_object *p_isrole(json_object *params){
 
 	if (json_object_get_type(name_obj) != json_type_string) {
 		return p_response_failed_ex("Parameter 'name' is not valid");
+	}
+
+	if (!acl->roles) {
+		return p_response_no();
 	}
 
 	name = json_object_get_string(name_obj);

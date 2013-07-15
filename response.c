@@ -11,7 +11,7 @@
  * Authors: Andres Gutierrez <andres@phalconphp.com>
  */
 
-#include "json-c/json.h"
+#include "json/json.h"
 
 json_object *p_response_ok() {
 

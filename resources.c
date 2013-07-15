@@ -11,7 +11,9 @@
  * Authors: Andres Gutierrez <andres@phalconphp.com>
  */
 
-#include "json-c/json.h"
+#include "stdlib.h"
+
+#include "json/json.h"
 
 #include "hash.h"
 
@@ -47,7 +49,7 @@ json_object *p_addresource(json_object *params){
 	name_length = json_object_get_string_len(name_obj);
 
 	if (!acl->resources) {
-		acl->resources = p_hash_table_create(16, NULL);
+		acl->resources = p_hash_table_create(17, NULL);
 	} else {
 		resource = p_hash_table_get(acl->resources, name, name_length);
 	}
@@ -86,6 +88,10 @@ json_object *p_isresource(json_object *params){
 
 	if (json_object_get_type(name_obj) != json_type_string) {
 		return p_response_failed_ex("Parameter 'name' does not have a valid type");
+	}
+
+	if (!acl->resources) {
+		return p_response_no();
 	}
 
 	name = json_object_get_string(name_obj);

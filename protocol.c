@@ -11,7 +11,7 @@
  * Authors: Andres Gutierrez <andres@phalconphp.com>
  */
 
-#include "json-c/json.h"
+#include "json/json.h"
 
 #include "hash.h"
 
@@ -64,18 +64,18 @@ json_object *parse_proto(char *cmd, size_t n) {
 	}
 
 	if (json_object_get_type(new_obj) != json_type_object) {
-		//json_put_object(new_obj);
+		json_object_put(new_obj);
 		return p_response_failed_ex("Commands must be JSON objects");
 	}
 
 	action_obj = json_object_object_get(new_obj, "action");
 	if (!action_obj) {
-		//json_put_object(new_obj);
+		json_object_put(new_obj);
 		return p_response_failed_ex("Parameter 'action' is required");
 	}
 
 	if (json_object_get_type(action_obj) != json_type_string) {
-		//json_put_object(new_obj);
+		json_object_put(new_obj);
 		return p_response_failed_ex("Parameter 'action' has an invalid type");
 	}
 
@@ -93,13 +93,11 @@ json_object *parse_proto(char *cmd, size_t n) {
 	} while (command_list[0].value != NULL);
 
 	if (!command_found) {
-		//json_put_object(new_obj);
+		json_object_put(new_obj);
 		return p_response_failed_ex("Command was not found");
 	}
 
 	response_obj = command_list->func(new_obj);
-
-	//json_put_object(new_obj);
-
+	json_object_put(new_obj);
 	return response_obj;
 }

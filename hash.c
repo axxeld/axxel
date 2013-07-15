@@ -149,7 +149,7 @@ int p_hash_table_insert_quick(p_hash_table *hash_table, const char *key, unsigne
 			return 0;
 		}
 
-		fprintf(stderr, "Inserting %d:%s\n", hash_table->num_elements, node->key);
+		//fprintf(stderr, "Inserting %d:%s\n", hash_table->num_elements, node->key);
 	}
 
 	node->key_length = key_length;
@@ -162,7 +162,7 @@ int p_hash_table_insert_quick(p_hash_table *hash_table, const char *key, unsigne
 	 * Resize the table when the number of elements is at least the 75% of the hash size
 	 */
 	if (hash_table->num_elements > (hash_table->size * 0.75)) {
-		fprintf(stderr, "Num elements: %d, resizing to %d...\n", hash_table->num_elements, (int)(hash_table->size + hash_table->size * 0.25));
+		//fprintf(stderr, "Num elements: %d, resizing to %d...\n", hash_table->num_elements, (int)(hash_table->size + hash_table->size * 0.25));
 		p_hash_table_resize(hash_table, hash_table->size + hash_table->size * 0.25);
 	}
 
@@ -257,7 +257,7 @@ void p_hash_table_destroy(p_hash_table *hash_table)
 	for (n = 0; n < hash_table->size; ++n) {
 		node = hash_table->nodes[n];
 		while (node) {
-			fprintf(stderr, "Freeing bucket=%d\n", n);
+			//fprintf(stderr, "Freeing bucket=%d\n", n);
 			free(node->data);
 			free(node->key);
 			oldnode = node;
@@ -343,8 +343,8 @@ double p_hash_table_empty_ratio(p_hash_table *hash_table)
 		}
 	}
 
-	fprintf(stderr, "%d\n", number_buckets);
-	fprintf(stderr, "%d\n", hash_table->num_elements);
+	//fprintf(stderr, "%d\n", number_buckets);
+	//fprintf(stderr, "%d\n", hash_table->num_elements);
 
 	return number_buckets / hash_table->num_elements;
 }
