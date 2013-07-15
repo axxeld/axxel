@@ -53,8 +53,9 @@ void echo_read_cb(struct bufferevent *buffer_ev, void *ctx) {
 
 void echo_event_cb(struct bufferevent *bev, short events, void *ctx)
 {
-	if (events & BEV_EVENT_ERROR)
+	if (events & BEV_EVENT_ERROR) {
 		perror("Error from bufferevent");
+	}		
 	if (events & (BEV_EVENT_EOF | BEV_EVENT_ERROR)) {
 		bufferevent_free(bev);
 	}
