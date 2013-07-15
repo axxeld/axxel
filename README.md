@@ -15,8 +15,8 @@ queries over the Access-Control-Lists with high performance.
 #### Requirements
 We need some packages previously installed.
 
-* [libevent2][http://libevent.org/]
-* [json-c][https://github.com/json-c/json-c]
+* [libevent2](http://libevent.org/)
+* [json-c](https://github.com/json-c/json-c)
 
 ### Example
 
