@@ -1,22 +1,22 @@
-
 Axxel - Acl In-Memory Cache Server
 ==================================
 
 Axxel is an in-memory cache server for Access-Control-Lists.
 
-Axxel provides a specialized server for ACLs allowing web applications to check permissions in a faster and scalable way.
+Axxel provides a specialized server for ACLs allowing web applications to check permissions in a 
+faster and scalable way.
 
-Axxel works as a daemon which interact with clients using JSON messages. Networking in Axxel is powered
-by libevent2 (as Memcached) providing non-blocking/asynchronous I/O.
+Axxel works as a daemon which interacts with clients using JSON messages. Networking in Axxel is powered
+by libevent2 (as Chrome/Memcached/Tor) providing non-blocking/asynchronous I/O.
 
 Axxel does not have persistence, it uses in-memory HashTables allowing clients to perform 
-queries over the Access-Control-Lists with a high performance.
+queries over the Access-Control-Lists with high performance.
 
 #### Requirements
 We need some packages previously installed.
 
-* libevent2
-* json-c
+* [libevent2][http://libevent.org/]
+* [json-c][https://github.com/json-c/json-c]
 
 ### Example
 
@@ -39,6 +39,7 @@ if not a.exist? then
 	a.allow("Guests", "Products", "index")
 end
 
+# Check for permissions
 if a.is_allowed?("Administrators", "Products", "search") then
 	puts "It's Allowed"
 else
