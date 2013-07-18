@@ -19,8 +19,10 @@
 #include "hash.h"
 
 #include "axxel.h"
+
 #include "memory.h"
 #include "hash.h"
+#include "logger.h"
 #include "response.h"
 
 char *p_getthreekey(char *role_key, unsigned int role_length, char *resource_key, unsigned int resource_length, char *access_key, unsigned int access_length, unsigned int *length) {
@@ -39,7 +41,54 @@ char *p_getthreekey(char *role_key, unsigned int role_length, char *resource_key
 	return key;
 }
 
-acl_list *p_getacl(json_object *params) {
+/**
+ * Creates a new ACL
+ */
+json_object *p_createacl(p_hash_table *acl_lists, json_object *params) {
+
+	const char *name;
+	unsigned int name_length;
+	acl_list *acl;
+	json_object *name_obj;
+
+	name_obj = json_object_object_get(params, "name");
+	if (!name_obj) {
+		return p_response_failed_ex("Parameter 'name' is required");
+	}
+
+	if (json_object_get_type(name_obj) != json_type_string) {
+		return p_response_failed_ex("ACL name must be a string");
+	}
+
+	name = json_object_get_string(name_obj);
+	name_length = json_object_get_string_len(name_obj);
+
+	acl = p_hash_table_get(acl_lists, name, name_length);
+	if (!acl) {
+
+		acl = pmalloc(sizeof(acl_list));
+		acl->name = pmalloc(sizeof(char) * name_length + 1);
+		memcpy(acl->name, name, name_length);
+		acl->name[name_length] = '\0';
+		acl->name_length = name_length;		
+		acl->resources = NULL;
+		acl->access_list = NULL;
+		acl->control_list = NULL;
+
+		p_hash_table_insert(acl_lists, name, name_length, acl);
+
+		p_log_notice("Creating new ACL");
+
+		return p_response_ok();
+	}
+
+	return p_response_failed();
+}
+
+/**
+ * Returns an existing ACL
+ */
+acl_list *p_getacl(p_hash_table *acl_lists, json_object *params) {
 
 	const char *name;
 	unsigned int name_length;
@@ -58,35 +107,16 @@ acl_list *p_getacl(json_object *params) {
 	name = json_object_get_string(acl_obj);
 	name_length = json_object_get_string_len(acl_obj);
 
-	if (!acl_lists) {
-		acl_lists = p_hash_table_create(31, NULL);
-	} else {
-		acl = p_hash_table_get(acl_lists, name, name_length);
-	}
-
-	if (!acl) {
-
-		acl = pmalloc(sizeof(acl_list));
-		acl->name = name;
-		acl->name_length = name_length;
-		acl->roles = NULL;
-		acl->resources = NULL;
-		acl->access_list = NULL;
-		acl->control_list = NULL;
-
-		p_hash_table_insert(acl_lists, name, name_length, acl);
-	}
-
-	return acl;
+	return p_hash_table_get(acl_lists, name, name_length);
 }
 
-json_object *p_defaultaction(json_object *params){
+/*json_object *p_defaultaction(p_hash_table *acl_lists, json_object *params){
 
 	acl_list *acl;
 	json_object *name_obj, *value_obj;
 	const char *value;
 
-	acl = p_getacl(params);
+	acl = p_getacl(acl_lists, params);
 	if (!acl) {
 		return p_response_failed();
 	}
@@ -115,7 +145,7 @@ json_object *p_defaultaction(json_object *params){
 	return p_response_ok();
 }
 
-json_object *p_allow_or_deny(json_object *params, int action) {
+json_object *p_allow_or_deny(p_hash_table *acl_lists, json_object *params, int action) {
 
 	acl_list *acl;
 	acl_resource *resource;
@@ -126,7 +156,7 @@ json_object *p_allow_or_deny(json_object *params, int action) {
 	unsigned int access_type, type, array_length, i, *paction;
 	p_hash_table *role_hash, *resource_hash;
 
-	acl = p_getacl(params);
+	acl = p_getacl(acl_lists, params);
 	if (!acl) {
 		return p_response_failed_ex("ACL cannot be obtained");
 	}
@@ -193,7 +223,7 @@ json_object *p_allow_or_deny(json_object *params, int action) {
 
 	/**
 	 * Round 1: Check first that every element exist as an access in the respective resource
-	 */
+	 * /
 	if (type == json_type_string) {
 
 		access_name = json_object_get_string(accesses_obj);
@@ -226,30 +256,30 @@ json_object *p_allow_or_deny(json_object *params, int action) {
 	}
 
 	if (!acl->access_list) {
-		acl->access_list = p_hash_table_create(31, NULL);
+		acl->access_list = p_hash_table_create(31);
 	}
 
 	/**
 	 * First level is the role hash
-	 */
+	 * /
 	role_hash = p_hash_table_get(acl->access_list, role_name, role_name_length);
 	if (!role_hash) {
-		role_hash = p_hash_table_create(31, NULL);
+		role_hash = p_hash_table_create(31);
 		p_hash_table_insert(acl->access_list, role_name, role_name_length, role_hash);
 	}
 
 	/**
 	 * Second level is the resource hash
-	 */
+	 * /
 	resource_hash = p_hash_table_get(role_hash, resource_name, resource_name_length);
 	if (!resource_hash) {
-		resource_hash = p_hash_table_create(229, NULL);
+		resource_hash = p_hash_table_create(229);
 		p_hash_table_insert(role_hash, resource_name, resource_name_length, resource_hash);
 	}
 
 	/**
 	 * Round 2: Insert the permissions
-	 */
+	 * /
 	if (type == json_type_string) {
 
 		paction = pmalloc(sizeof(unsigned int));
@@ -275,24 +305,24 @@ json_object *p_allow_or_deny(json_object *params, int action) {
 
 	/**
 	 * Round 3: Rebuild the ACL list
-	 */
+	 * /
 	p_rebuildlist(acl);
 
 	return p_response_ok();
+}*/
+
+/*json_object *p_allow(p_hash_table *acl_lists, json_object *params) {
+	return p_allow_or_deny(acl_lists, params, 1);
 }
 
-json_object *p_allow(json_object *params) {
-	return p_allow_or_deny(params, 1);
-}
-
-json_object *p_deny(json_object *params) {
-	return p_allow_or_deny(params, 0);
-}
+json_object *p_deny(p_hash_table *acl_lists, json_object *params) {
+	return p_allow_or_deny(acl_lists, params, 0);
+}*/
 
 /**
  * Returns the acceses assigned to a role/resource
  */
-json_object *p_getaccesses(json_object *params) {
+/*json_object *p_getaccesses(p_hash_table *acl_lists, json_object *params) {
 
 	acl_list *acl;
 	acl_resource *resource;
@@ -304,7 +334,7 @@ json_object *p_getaccesses(json_object *params) {
 	p_hash_table *role_hash, *resource_hash;
 	struct p_hash_node *role_node, *role_next, *resource_node, *resource_next;
 
-	acl = p_getacl(params);
+	acl = p_getacl(acl_lists, params);
 	if (!acl) {
 		return p_response_failed_ex("ACL cannot be obtained");
 	}
@@ -363,7 +393,7 @@ json_object *p_getaccesses(json_object *params) {
 
 	/**
 	 * First level is the role hash
-	 */
+	 * /
 	role_hash = p_hash_table_get(acl->access_list, role_name, role_name_length);
 	if (!role_hash) {
 		accesses = json_object_new_object();
@@ -423,9 +453,9 @@ json_object *p_getaccesses(json_object *params) {
 
 	json_object_object_add(response, "accesses", accesses);
 	return response;
-}
+}*/
 
-int p_rebuildlist(acl_list *acl) {
+/*int p_rebuildlist(p_hash_table *acl_lists, acl_list *acl) {
 
 	char *key;
 	unsigned int i, j, k, *paction, length;
@@ -442,7 +472,7 @@ int p_rebuildlist(acl_list *acl) {
 		p_hash_table_destroy(acl->control_list);
 	}
 
-	access_list = p_hash_table_create(1039, NULL);
+	access_list = p_hash_table_create(1039);
 
 	for (i = 0; i < acl->access_list->size; ++i) {
 		for (role_node = acl->access_list->nodes[i]; role_node; role_node = role_next) {
@@ -489,12 +519,12 @@ int p_rebuildlist(acl_list *acl) {
 	acl->control_list = access_list;
 
 	return 1;
-}
+}*/
 
 /**
  * Check if role is allowed to access a resource/access combination
  */
-json_object *p_isallowed(json_object *params) {
+/*json_object *p_isallowed(p_hash_table *acl_lists, json_object *params) {
 
 	acl_list *acl;
 	acl_resource *resource;
@@ -504,7 +534,7 @@ json_object *p_isallowed(json_object *params) {
 	unsigned int access_name_length, role_name_length, resource_name_length, length, *paction;
 	char *key;
 
-	acl = p_getacl(params);
+	acl = p_getacl(acl_lists, params);
 	if (!acl) {
 		return p_response_no();
 	}
@@ -582,4 +612,4 @@ json_object *p_isallowed(json_object *params) {
 	}
 
 	return p_response_no();
-}
+}*/

@@ -8,7 +8,7 @@
  * Use and distribution licensed under the MIT license.
  * See the LICENSE file for full text.
  *
- * Authors: Andres Gutierrez <andres@phalconphp.com>
+ * Authors: Andres Gutierrez <andres@axxeld.com>
  */
 
 #define SL(ch) ch, sizeof(ch)-1
@@ -20,25 +20,30 @@ typedef struct _acl_role {
 } acl_role;
 
 typedef struct _acl_resource {
-	const char *name;
+	char *name;
 	unsigned int name_length;
 	p_hash_table *accesses;
 } acl_resource;
 
-typedef struct _acl_list {
+typedef struct _acl_control_level {
 	const char *name;
+	unsigned int name_length;
+} acl_control_level;
+
+typedef struct _acl_list {
+	char *name;
 	int name_length;
 	int default_access;
-	p_hash_table *roles;
+	acl_control_level *control_levels;	
 	p_hash_table *resources;
 	p_hash_table *access_list;
 	p_hash_table *control_list;
 } acl_list;
 
-typedef struct _command {
+typedef struct _proto_command {
 	char *value;
 	unsigned int length;
-	json_object *(*func)(json_object *params);
-} command;
+	json_object *(*func)(p_hash_table *, json_object *);
+} proto_command;
 
 extern p_hash_table *acl_lists;

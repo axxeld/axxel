@@ -8,7 +8,7 @@
  * Use and distribution licensed under the MIT license.
  * See the LICENSE file for full text.
  *
- * Authors: Andres Gutierrez <andres@phalconphp.com>
+ * Authors: Andres Gutierrez <andres@axxeld.com>
  */
 
 #include "json/json.h"
@@ -22,16 +22,19 @@
 #include "resources.h"
 #include "response.h"
 
-const command commands[] = {
+const proto_command commands[] = {
 
-	{ SL("add-role"), p_addrole },
+	{ SL("create-acl"), p_createacl },
+
+	/*{ SL("add-role"), p_addrole },
 	{ SL("is-role"), p_isrole },
 	{ SL("get-roles"), p_getroles },
-	{ SL("delete-role"), p_delrole },
+	{ SL("delete-role"), p_delrole },*/
 
 	{ SL("add-resource"), p_addresource },
 	{ SL("is-resource"), p_isresource },
 	{ SL("get-resources"), p_getresources },
+	{ SL("count-resources"), p_countresources },
 	{ SL("delete-resource"), p_delresource },
 
 	{ SL("add-resource-access"), p_addresourceaccess },
@@ -39,21 +42,21 @@ const command commands[] = {
 	{ SL("get-resource-accesses"), p_getresourceaccesses },
 	{ SL("delete-resource-access"), p_delresourceaccesses },
 
-	{ SL("allow"), p_allow },
+	/*{ SL("allow"), p_allow },
 	{ SL("deny"), p_deny },
 	{ SL("get-accesses"), p_getaccesses },
 	{ SL("allowed"), p_isallowed },
 
-	{ SL("default-action"), p_defaultaction },
+	{ SL("default-action"), p_defaultaction },*/
 	{ NULL, 0, NULL }
 };
 
 /**
  * Executes the internal function according to the action requested in the parameter
  */
-json_object *parse_proto(char *cmd, size_t n) {
+json_object *parse_proto(p_hash_table *acl_lists, char *cmd, size_t n) {
 
-	const command *command_list = commands;
+	const proto_command *command_list = commands;
 	unsigned int action_length, command_found = 0;
 	const char *action;
 	json_object *new_obj, *action_obj, *response_obj;
@@ -97,7 +100,7 @@ json_object *parse_proto(char *cmd, size_t n) {
 		return p_response_failed_ex("Command was not found");
 	}
 
-	response_obj = command_list->func(new_obj);
+	response_obj = command_list->func(acl_lists, new_obj);
 	json_object_put(new_obj);
 	return response_obj;
 }

@@ -8,7 +8,7 @@
  * Use and distribution licensed under the MIT license.
  * See the LICENSE file for full text.
  *
- * Authors: Andres Gutierrez <andres@phalconphp.com>
+ * Authors: Andres Gutierrez <andres@axxeld.com>
  */
 
 #include <event2/listener.h>
@@ -28,8 +28,12 @@
 #include "hash.h"
 #include "axxel.h"
 #include "protocol.h"
+#include "logger.h"
 
-void echo_read_cb(struct bufferevent *buffer_ev, void *ctx) {
+/**
+ * This function is called when a read event is generated on a network socket
+ */
+void handle_read_cb(struct bufferevent *buffer_ev, void *ctx) {
 
 	struct evbuffer *input = bufferevent_get_input(buffer_ev);
 	struct evbuffer *output = bufferevent_get_output(buffer_ev);
@@ -38,10 +42,13 @@ void echo_read_cb(struct bufferevent *buffer_ev, void *ctx) {
 	const char *response_json;
 	size_t n;
 	long length;
-	int status;	
+	int status;
+	p_hash_table *acl_lists;	
+
+	acl_lists = (p_hash_table *) ctx;	
 
 	while ((line = evbuffer_readln(input, &n, EVBUFFER_EOL_LF))) {		
-		response = parse_proto(line, n);					
+		response = parse_proto(acl_lists, line, n);					
 		response_json = json_object_to_json_string(response);
 		evbuffer_add(output, response_json, strlen(response_json));		
 		evbuffer_add(output, SL("\n"));
@@ -51,7 +58,7 @@ void echo_read_cb(struct bufferevent *buffer_ev, void *ctx) {
 
 }
 
-void echo_event_cb(struct bufferevent *bev, short events, void *ctx)
+void handle_event_cb(struct bufferevent *bev, short events, void *ctx)
 {
 	if (events & BEV_EVENT_ERROR) {
 		perror("Error from bufferevent");
@@ -61,12 +68,14 @@ void echo_event_cb(struct bufferevent *bev, short events, void *ctx)
 	}
 }
 
-void accept_conn_cb(struct evconnlistener *listener, evutil_socket_t fd, struct sockaddr *address, int socklen, void *ctx)
+void accept_connection_cb(struct evconnlistener *listener, evutil_socket_t fd, struct sockaddr *address, int socklen, void *ctx)
 {
 	struct event_base *base = evconnlistener_get_base(listener);
 	struct bufferevent *bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE);
 
-	bufferevent_setcb(bev, echo_read_cb, NULL, echo_event_cb, NULL);
+	//fprintf(stderr, "%s\n", address->s_addr);
+	
+	bufferevent_setcb(bev, handle_read_cb, NULL, handle_event_cb, ctx);
 
 	bufferevent_enable(bev, EV_READ|EV_WRITE);
 }
@@ -80,7 +89,10 @@ void accept_error_cb(struct evconnlistener *listener, void *ctx)
 	event_base_loopexit(base, NULL);
 }
 
-int start_server()
+/** 
+ * Starts the network server
+ */
+int start_server(p_hash_table *acls)
 {
 
 	struct event_base *base;
@@ -114,8 +126,8 @@ int start_server()
 	//memset(&sun, 0, sizeof(sun));
 	//sun.sun_family = AF_LOCAL;
 	//strcpy(sun.sun_path, "/tmp/axxel-socket");
-
-	listener = evconnlistener_new_bind(base, accept_conn_cb, NULL, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1, (struct sockaddr*)&sin, sizeof(sin));
+	
+	listener = evconnlistener_new_bind(base, accept_connection_cb, acls, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1, (struct sockaddr*)&sin, sizeof(sin));
 	if (!listener) {
 		perror("can't create listener");
 		return 1;

@@ -20,7 +20,7 @@
 #include "acl.h"
 #include "response.h"
 
-json_object *p_addrole(json_object *params){
+/*json_object *p_addrole(p_hash_table *acl_lists, json_object *params){
 
 	acl_list *acl;
 	acl_role *role = NULL;
@@ -28,7 +28,7 @@ json_object *p_addrole(json_object *params){
 	const char *name;
 	unsigned int name_length;
 
-	acl = p_getacl(params);
+	acl = p_getacl(acl_lists, params);
 	if (!acl) {
 		return p_response_failed_ex("ACL cannot be obtained");
 	}
@@ -64,7 +64,7 @@ json_object *p_addrole(json_object *params){
 	return p_response_failed();
 }
 
-json_object *p_isrole(json_object *params){
+json_object *p_isrole(p_hash_table *acl_lists, json_object *params){
 
 	acl_list *acl;
 	acl_role *role;
@@ -72,7 +72,7 @@ json_object *p_isrole(json_object *params){
 	const char *name;
 	unsigned int name_length;
 
-	acl = p_getacl(params);
+	acl = p_getacl(acl_lists, params);
 	if (!acl) {
 		return p_response_failed();
 	}
@@ -101,7 +101,7 @@ json_object *p_isrole(json_object *params){
 	return p_response_yes();
 }
 
-json_object *p_getroles(json_object *params){
+json_object *p_getroles(p_hash_table *acl_lists, json_object *params){
 
 	unsigned int n, length;
 	acl_list *acl;
@@ -109,7 +109,7 @@ json_object *p_getroles(json_object *params){
 	struct p_hash_node *node, *next;
 	json_object *response, *roles;
 
-	acl = p_getacl(params);
+	acl = p_getacl(acl_lists, params);
 	if (!acl) {
 		return p_response_failed();
 	}
@@ -137,14 +137,14 @@ json_object *p_getroles(json_object *params){
 	return response;
 }
 
-json_object *p_delrole(json_object *params){
+json_object *p_delrole(p_hash_table *acl_lists, json_object *params){
 
 	acl_list *acl;
 	json_object *name_obj;
 	const char *name;
 	unsigned int name_length;
 
-	acl = p_getacl(params);
+	acl = p_getacl(acl_lists, params);
 	if (!acl) {
 		return p_response_failed();
 	}
@@ -167,3 +167,4 @@ json_object *p_delrole(json_object *params){
 
 	return p_response_ok();
 }
+*/

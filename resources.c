@@ -8,10 +8,11 @@
  * Use and distribution licensed under the MIT license.
  * See the LICENSE file for full text.
  *
- * Authors: Andres Gutierrez <andres@phalconphp.com>
+ * Authors: Andres Gutierrez <andres@axxeld.com>
  */
 
 #include "stdlib.h"
+#include "string.h"
 
 #include "json/json.h"
 
@@ -23,7 +24,7 @@
 #include "acl.h"
 #include "response.h"
 
-json_object *p_addresource(json_object *params){
+json_object *p_addresource(p_hash_table *acl_lists, json_object *params){
 
 	acl_list *acl;
 	acl_resource *resource = NULL;
@@ -31,7 +32,7 @@ json_object *p_addresource(json_object *params){
 	const char *name;
 	unsigned int name_length;
 
-	acl = p_getacl(params);
+	acl = p_getacl(acl_lists, params);
 	if (!acl) {
 		return p_response_failed_ex("ACL cannot be obtained");
 	}
@@ -49,7 +50,7 @@ json_object *p_addresource(json_object *params){
 	name_length = json_object_get_string_len(name_obj);
 
 	if (!acl->resources) {
-		acl->resources = p_hash_table_create(17, NULL);
+		acl->resources = p_hash_table_create(17);
 	} else {
 		resource = p_hash_table_get(acl->resources, name, name_length);
 	}
@@ -57,7 +58,9 @@ json_object *p_addresource(json_object *params){
 	if (!resource) {
 
 		resource = pmalloc(sizeof(acl_resource));
-		resource->name = name;
+		resource->name = pmalloc(sizeof(char) * name_length + 1);
+		memcpy(resource->name, name, name_length);
+		resource->name[name_length] = '\0';
 		resource->name_length = name_length;
 		resource->accesses = NULL;
 		p_hash_table_insert(acl->resources, name, name_length, resource);
@@ -68,7 +71,7 @@ json_object *p_addresource(json_object *params){
 	return p_response_failed();
 }
 
-json_object *p_isresource(json_object *params){
+json_object *p_isresource(p_hash_table *acl_lists, json_object *params){
 
 	acl_list *acl;
 	acl_resource *resource;
@@ -76,7 +79,7 @@ json_object *p_isresource(json_object *params){
 	const char *name;
 	unsigned int name_length;
 
-	acl = p_getacl(params);
+	acl = p_getacl(acl_lists, params);
 	if (!acl) {
 		return p_response_failed_ex("ACL cannot be obtained");
 	}
@@ -105,7 +108,7 @@ json_object *p_isresource(json_object *params){
 	return p_response_yes();
 }
 
-json_object *p_getresources(json_object *params){
+json_object *p_getresources(p_hash_table *acl_lists, json_object *params){
 
 	unsigned int n, length;
 	acl_list *acl;
@@ -113,7 +116,7 @@ json_object *p_getresources(json_object *params){
 	struct p_hash_node *node, *next;
 	json_object *response, *resources;
 
-	acl = p_getacl(params);
+	acl = p_getacl(acl_lists, params);
 	if (!acl) {
 		return p_response_failed_ex("ACL cannot be obtained");
 	}
@@ -139,17 +142,45 @@ json_object *p_getresources(json_object *params){
 	return response;
 }
 
-/**
- * Deletes a resource
- */
-json_object *p_delresource(json_object *params){
+json_object *p_countresources(p_hash_table *acl_lists, json_object *params){
+
+	unsigned int n, length, count = 0;
+	acl_list *acl;
+	acl_resource *resource;
+	struct p_hash_node *node, *next;
+	json_object *response;
+
+	acl = p_getacl(acl_lists, params);
+	if (!acl) {
+		return p_response_failed_ex("ACL does not exist");
+	}
+
+	response = json_object_new_object();
+
+	json_object_object_add(response, "response", json_object_new_string("ok"));	
+
+	if (acl->resources != NULL) {
+		for (n = 0; n < acl->resources->size; ++n) {
+			for (node = acl->resources->nodes[n]; node; node = next) {
+				count++;
+				next = node->next;
+			}
+		}
+	}
+
+	json_object_object_add(response, "count", json_object_new_int(count));
+
+	return response;
+}
+
+json_object *p_delresource(p_hash_table *acl_lists, json_object *params){
 
 	acl_list *acl;
 	json_object *name_obj;
 	const char *name;
 	unsigned int name_length;
 
-	acl = p_getacl(params);
+	acl = p_getacl(acl_lists, params);
 	if (!acl) {
 		return p_response_failed_ex("ACL cannot be obtained");
 	}
@@ -173,7 +204,7 @@ json_object *p_delresource(json_object *params){
 	return p_response_ok();
 }
 
-json_object *p_addresourceaccess(json_object *params) {
+json_object *p_addresourceaccess(p_hash_table *acl_lists, json_object *params) {
 
 	acl_list *acl;
 	acl_resource *resource;
@@ -181,7 +212,7 @@ json_object *p_addresourceaccess(json_object *params) {
 	const char *resource_name, *access_name;
 	unsigned int access_name_length, resource_name_length, type, array_length, i, *dummy;
 
-	acl = p_getacl(params);
+	acl = p_getacl(acl_lists, params);
 	if (!acl) {
 		return p_response_failed_ex("ACL cannot be obtained");
 	}
@@ -218,7 +249,7 @@ json_object *p_addresourceaccess(json_object *params) {
 	}
 
 	if (!resource->accesses) {
-		resource->accesses = p_hash_table_create(31, NULL);
+		resource->accesses = p_hash_table_create(31);
 	}
 
 	if (type == json_type_string) {
@@ -255,7 +286,7 @@ json_object *p_addresourceaccess(json_object *params) {
 	return p_response_ok();
 }
 
-json_object *p_isresourceaccess(json_object *params) {
+json_object *p_isresourceaccess(p_hash_table *acl_lists, json_object *params) {
 
 	acl_list *acl;
 	acl_resource *resource;
@@ -264,7 +295,7 @@ json_object *p_isresourceaccess(json_object *params) {
 	const char *resource_name, *access_name;
 	unsigned int access_name_length, resource_name_length, type, array_length, i;
 
-	acl = p_getacl(params);
+	acl = p_getacl(acl_lists, params);
 	if (!acl) {
 		return p_response_failed_ex("ACL cannot be obtained");
 	}
@@ -353,7 +384,7 @@ json_object *p_isresourceaccess(json_object *params) {
 	return p_response_no();
 }
 
-json_object *p_getresourceaccesses(json_object *params) {
+json_object *p_getresourceaccesses(p_hash_table *acl_lists, json_object *params) {
 
 	acl_list *acl;
 	acl_resource *resource;
@@ -362,7 +393,7 @@ json_object *p_getresourceaccesses(json_object *params) {
 	const char *resource_name;
 	unsigned int resource_name_length, i;
 
-	acl = p_getacl(params);
+	acl = p_getacl(acl_lists, params);
 	if (!acl) {
 		return p_response_failed_ex("ACL cannot be obtained");
 	}
@@ -408,7 +439,7 @@ json_object *p_getresourceaccesses(json_object *params) {
 	return response;
 }
 
-json_object *p_delresourceaccesses(json_object *params) {
+json_object *p_delresourceaccesses(p_hash_table *acl_lists, json_object *params) {
 
 	acl_list *acl;
 	acl_resource *resource;
@@ -417,7 +448,7 @@ json_object *p_delresourceaccesses(json_object *params) {
 	const char *resource_name, *access_name;
 	unsigned int access_name_length, resource_name_length, type, array_length, i;
 
-	acl = p_getacl(params);
+	acl = p_getacl(acl_lists, params);
 	if (!acl) {
 		return p_response_failed_ex("ACL cannot be obtained");
 	}

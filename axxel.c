@@ -22,10 +22,14 @@
 #include "axxel.h"
 #include "protocol.h"
 
-p_hash_table *acl_lists = NULL;
-
 int main(int argc, char **argv) {
-	start_server();
+
+	p_hash_table *acl_lists;
+
+	acl_lists = p_hash_table_create(31);
+
+	start_server(acl_lists);
+
 	return 0;
 }
 

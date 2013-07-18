@@ -11,4 +11,12 @@
  * Authors: Andres Gutierrez <andres@axxeld.com>
  */
 
-json_object *parse_proto(p_hash_table *acl_lists, char *cmd, size_t n);
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "logger.h"
+
+void p_log(char *message, int severity) {
+	fprintf(stderr, "%s\n", message);
+}
