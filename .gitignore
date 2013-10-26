@@ -2,3 +2,9 @@ json-c
 axxel
 axxel.dSYM/
 .DS_Store
+a.c
+a.out
+a.out.dSYM/
+js-1.8.5/
+js185-1.0.0.tar.gz
+test3.zip

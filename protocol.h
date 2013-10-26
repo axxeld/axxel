@@ -11,4 +11,5 @@
  * Authors: Andres Gutierrez <andres@axxeld.com>
  */
 
-json_object *parse_proto(p_hash_table *acl_lists, char *cmd, size_t n);
+json_object *parse_proto(JSContext *cx, p_hash_table *acl_lists, char *cmd, size_t n);
+JSContext *init_proto();

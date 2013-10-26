@@ -1,3 +1,2 @@
 
-gcc axxel.c logger.c protocol.c response.c server.c acl.c roles.c resources.c hash.c -o axxel -levent -ljson-c \
-	-I/opt/local/include -L/opt/local/lib -g3
+gcc -g3 -lmozjs185 -levent -ljson-c -I/opt/local/include -L/opt/local/lib -L/opt/local/lib axxel.c logger.c protocol.c response.c server.c acl.c roles.c resources.c hash.c -o axxel

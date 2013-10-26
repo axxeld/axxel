@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "js/js/src/jsapi.h"
 #include "json/json.h"
 
 #include "hash.h"
@@ -27,9 +28,7 @@ int main(int argc, char **argv) {
 	p_hash_table *acl_lists;
 
 	acl_lists = p_hash_table_create(31);
-
 	start_server(acl_lists);
-
 	return 0;
 }
 

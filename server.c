@@ -24,6 +24,8 @@
 #include <stdio.h>
 #include <errno.h>
 
+#include "js/js/src/jsapi.h"
+
 #include "json/json.h"
 #include "hash.h"
 #include "axxel.h"
@@ -35,25 +37,28 @@
  */
 void handle_read_cb(struct bufferevent *buffer_ev, void *ctx) {
 
+	JSContext *cx;
 	struct evbuffer *input = bufferevent_get_input(buffer_ev);
 	struct evbuffer *output = bufferevent_get_output(buffer_ev);
 	json_object *response;
-	char *line, *pend; 
+	char *line, *pend;
 	const char *response_json;
 	size_t n;
 	long length;
 	int status;
-	p_hash_table *acl_lists;	
+	p_hash_table *acl_lists;
 
-	acl_lists = (p_hash_table *) ctx;	
+	acl_lists = (p_hash_table *) ctx;
+	cx = init_proto();
 
-	while ((line = evbuffer_readln(input, &n, EVBUFFER_EOL_LF))) {		
-		response = parse_proto(acl_lists, line, n);					
+	while ((line = evbuffer_readln(input, &n, EVBUFFER_EOL_LF))) {
+		response = parse_proto(cx, acl_lists, line, n);
 		response_json = json_object_to_json_string(response);
-		evbuffer_add(output, response_json, strlen(response_json));		
+		evbuffer_add(output, response_json, strlen(response_json));
 		evbuffer_add(output, SL("\n"));
 		free(line);
 		json_object_put(response);
+		break;
 	}
 
 }
@@ -62,7 +67,7 @@ void handle_event_cb(struct bufferevent *bev, short events, void *ctx)
 {
 	if (events & BEV_EVENT_ERROR) {
 		perror("Error from bufferevent");
-	}		
+	}
 	if (events & (BEV_EVENT_EOF | BEV_EVENT_ERROR)) {
 		bufferevent_free(bev);
 	}
@@ -74,7 +79,7 @@ void accept_connection_cb(struct evconnlistener *listener, evutil_socket_t fd, s
 	struct bufferevent *bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE);
 
 	//fprintf(stderr, "%s\n", address->s_addr);
-	
+
 	bufferevent_setcb(bev, handle_read_cb, NULL, handle_event_cb, ctx);
 
 	bufferevent_enable(bev, EV_READ|EV_WRITE);
@@ -89,7 +94,7 @@ void accept_error_cb(struct evconnlistener *listener, void *ctx)
 	event_base_loopexit(base, NULL);
 }
 
-/** 
+/**
  * Starts the network server
  */
 int start_server(p_hash_table *acls)
@@ -126,7 +131,7 @@ int start_server(p_hash_table *acls)
 	//memset(&sun, 0, sizeof(sun));
 	//sun.sun_family = AF_LOCAL;
 	//strcpy(sun.sun_path, "/tmp/axxel-socket");
-	
+
 	listener = evconnlistener_new_bind(base, accept_connection_cb, acls, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1, (struct sockaddr*)&sin, sizeof(sin));
 	if (!listener) {
 		perror("can't create listener");

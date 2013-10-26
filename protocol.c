@@ -11,7 +11,10 @@
  * Authors: Andres Gutierrez <andres@axxeld.com>
  */
 
-#include "json/json.h"
+#include <stdio.h>
+#include "js/js/src/jsapi.h"
+
+#include "json-c/json.h"
 
 #include "hash.h"
 
@@ -21,6 +24,15 @@
 #include "roles.h"
 #include "resources.h"
 #include "response.h"
+
+static JSClass global_class =
+{
+    "global", JSCLASS_GLOBAL_FLAGS,
+    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
+    JS_StrictPropertyStub,
+    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, JS_FinalizeStub,
+    JSCLASS_NO_OPTIONAL_MEMBERS
+};
 
 const proto_command commands[] = {
 
@@ -54,14 +66,32 @@ const proto_command commands[] = {
 /**
  * Executes the internal function according to the action requested in the parameter
  */
-json_object *parse_proto(p_hash_table *acl_lists, char *cmd, size_t n) {
+json_object *parse_proto(JSContext *cx, p_hash_table *acl_lists, char *cmd, size_t n) {
 
 	const proto_command *command_list = commands;
-	unsigned int action_length, command_found = 0;
-	const char *action;
-	json_object *new_obj, *action_obj, *response_obj;
+	//unsigned int action_length, command_found = 0;
+	//const char *action;
+	//json_object *new_obj, *action_obj, *response_obj;
+	json_object *response;
+	JSBool ok;
+    jsval rval;
+    JSObject *script;
 
-	new_obj = json_tokener_parse(cmd);
+    fprintf(stderr, "%s\n", cmd);
+
+	ok = JS_EvaluateScript(cx, JS_GetGlobalObject(cx), cmd, strlen(cmd), "TEST", 1, &rval);
+
+	if (ok) {
+		if (JSVAL_IS_INT(rval)) {
+			response = json_object_new_object();
+			json_object_object_add(response, "count", json_object_new_int(JSVAL_TO_INT(rval)));
+			return response;
+		}
+	}
+
+	return p_response_failed_ex("Commands must be JSON objects");
+
+	/*new_obj = json_tokener_parse(cmd);
 	if (!new_obj) {
 		return p_response_failed_ex("Command cannot be parsed");
 	}
@@ -102,5 +132,60 @@ json_object *parse_proto(p_hash_table *acl_lists, char *cmd, size_t n) {
 
 	response_obj = command_list->func(acl_lists, new_obj);
 	json_object_put(new_obj);
-	return response_obj;
+	return response_obj;*/
+}
+
+void reportError(JSContext *cx, const char *message, JSErrorReport *report)
+{
+    fprintf(stderr, "%s:%u:%s\n", report->filename ? report->filename : "<no filename>", (unsigned int) report->lineno, message);
+}
+
+JSContext *init_proto()
+{
+	/* JS variables. */
+    JSRuntime *rt;
+    JSContext *cx;
+    JSObject  *global;
+
+    /* Create a JS runtime. */
+    rt = JS_NewRuntime(8L * 1024L * 1024L);
+    if (rt == NULL)
+        return NULL;
+
+    /* Create a context. */
+    cx = JS_NewContext(rt, 8192);
+    if (cx == NULL)
+        return NULL;
+
+    JS_SetOptions(cx, JSOPTION_VAROBJFIX | JSOPTION_JIT | JSOPTION_METHODJIT);
+    JS_SetVersion(cx, JSVERSION_LATEST);
+    JS_SetErrorReporter(cx, reportError);
+
+    /* Create the global object in a new compartment. */
+    global = JS_NewCompartmentAndGlobalObject(cx, &global_class, NULL);
+    if (global == NULL)
+        return NULL;
+
+    //if (!JS_DefineFunctions(cx, global, myjs_global_functions))
+      //  return JS_FALSE;
+
+    /* Populate the global object with the standard globals,
+       like Object and Array. */
+    if (!JS_InitStandardClasses(cx, global))
+        return NULL;
+
+    return cx;
+}
+
+int shutdown_proto()
+{
+	/* Your application code here. This may include JSAPI calls
+       to create your own custom JS objects and run scripts. */
+    //test(cx);
+
+    /* Cleanup. */
+    //JS_DestroyContext(cx);
+    //JS_DestroyRuntime(rt);
+    //JS_ShutDown();
+    return 0;
 }
