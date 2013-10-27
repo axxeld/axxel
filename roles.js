@@ -11,4 +11,10 @@
  * Authors: Andres Gutierrez <andres@phalconphp.com>
  */
 
-int start_server(axxel_context *context);
+function Roles(name){
+	this.name = name;
+};
+
+Roles.prototype.getName = function(){
+	return this.name;
+};

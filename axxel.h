@@ -11,6 +11,12 @@
  * Authors: Andres Gutierrez <andres@axxeld.com>
  */
 
+#ifndef HAVE_AXXEL_H
+#define HAVE_AXXEL_H 1
+
+#include "mozilla/js/js/src/jsapi.h"
+#include "json-c/json.h"
+
 #define SL(ch) ch, sizeof(ch)-1
 #define SS(ch) ch, sizeof(ch)
 
@@ -34,7 +40,7 @@ typedef struct _acl_list {
 	char *name;
 	int name_length;
 	int default_access;
-	acl_control_level *control_levels;	
+	acl_control_level *control_levels;
 	p_hash_table *resources;
 	p_hash_table *access_list;
 	p_hash_table *control_list;
@@ -46,4 +52,11 @@ typedef struct _proto_command {
 	json_object *(*func)(p_hash_table *, json_object *);
 } proto_command;
 
-extern p_hash_table *acl_lists;
+typedef struct _axxel_context {
+	JSRuntime *runtime;
+	JSContext *jsContext;
+	JSObject  *global;
+	p_hash_table *acls;
+} axxel_context;
+
+#endif

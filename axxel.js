@@ -11,4 +11,11 @@
  * Authors: Andres Gutierrez <andres@phalconphp.com>
  */
 
-int start_server(axxel_context *context);
+var axxel = {
+
+	createAcl: function(name)
+	{
+		return new Acl(name);
+	}
+
+};

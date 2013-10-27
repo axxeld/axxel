@@ -11,4 +11,10 @@
  * Authors: Andres Gutierrez <andres@phalconphp.com>
  */
 
-int start_server(axxel_context *context);
+function Resources(name){
+	this.name = name;
+};
+
+Resources.prototype.getName = function(){
+	return this.name;
+};

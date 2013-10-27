@@ -24,9 +24,6 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include "js/js/src/jsapi.h"
-
-#include "json/json.h"
 #include "hash.h"
 #include "axxel.h"
 #include "protocol.h"
@@ -37,7 +34,6 @@
  */
 void handle_read_cb(struct bufferevent *buffer_ev, void *ctx) {
 
-	JSContext *cx;
 	struct evbuffer *input = bufferevent_get_input(buffer_ev);
 	struct evbuffer *output = bufferevent_get_output(buffer_ev);
 	json_object *response;
@@ -46,13 +42,11 @@ void handle_read_cb(struct bufferevent *buffer_ev, void *ctx) {
 	size_t n;
 	long length;
 	int status;
-	p_hash_table *acl_lists;
+	axxel_context *context;
 
-	acl_lists = (p_hash_table *) ctx;
-	cx = init_proto();
-
+	context = (axxel_context *) ctx;
 	while ((line = evbuffer_readln(input, &n, EVBUFFER_EOL_LF))) {
-		response = parse_proto(cx, acl_lists, line, n);
+		response = execute_proto(context, line, n);
 		response_json = json_object_to_json_string(response);
 		evbuffer_add(output, response_json, strlen(response_json));
 		evbuffer_add(output, SL("\n"));
@@ -97,7 +91,7 @@ void accept_error_cb(struct evconnlistener *listener, void *ctx)
 /**
  * Starts the network server
  */
-int start_server(p_hash_table *acls)
+int start_server(axxel_context *context)
 {
 
 	struct event_base *base;
@@ -132,7 +126,7 @@ int start_server(p_hash_table *acls)
 	//sun.sun_family = AF_LOCAL;
 	//strcpy(sun.sun_path, "/tmp/axxel-socket");
 
-	listener = evconnlistener_new_bind(base, accept_connection_cb, acls, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1, (struct sockaddr*)&sin, sizeof(sin));
+	listener = evconnlistener_new_bind(base, accept_connection_cb, context, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1, (struct sockaddr*)&sin, sizeof(sin));
 	if (!listener) {
 		perror("can't create listener");
 		return 1;
