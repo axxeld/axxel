@@ -21,8 +21,9 @@
 
 function Acl(name){
 	this.name = name;
-	this.resources = [];
-	this.roles = [];
+	this.resources = {};
+	this.roles = {};
+	this.list = {};
 };
 
 Acl.prototype.getName = function()
@@ -30,26 +31,96 @@ Acl.prototype.getName = function()
 	return this.name;
 };
 
-Acl.prototype.addRole = function(name) {
-	this.roles[this.roles.length] = new Roles(name);
+Acl.prototype.addRole = function(name)
+{
+	if (typeof this.roles[name] == "undefined") {
+ 		this.roles[name] = new Roles(name);
+ 		return this;
+ 	}
+ 	return this;
 };
 
-Acl.prototype.getRoles = function() {
-	return this.roles;
-}
+Acl.prototype.getRoles = function()
+{
+	var allRoles = [];
+	for (role in this.roles) {
+		allRoles[allRoles.length] = role;
+	}
+	return allRoles;
+};
 
-Acl.prototype.countRoles = function() {
+Acl.prototype.countRoles = function()
+{
 	return this.roles.length;
 }
 
 Acl.prototype.isRole = function(name)
 {
-	var length = this.roles.length;
-	for (var i = 0; i < length; i++) {
-		if (this.roles[i].name == name) {
-			return true;
-		}
-	};
-	return false;
+	return typeof this.roles[name] != "undefined";
 };
 
+Acl.prototype.addResource = function(name)
+{
+	if (typeof this.resources[name] == "undefined") {
+ 		this.resources[name] = new Resources(name);
+ 		return this;
+ 	}
+ 	return this;
+};
+
+Acl.prototype.getResources = function()
+{
+	var allResources = [];
+	for (resource in this.resources) {
+		allResources[allResources.length] = resource;
+	}
+	return allResources;
+};
+
+Acl.prototype.countResources = function()
+{
+	return this.resources.length;
+}
+
+Acl.prototype.isResource = function(name)
+{
+	return typeof this.resources[name] != "undefined";
+};
+
+Acl.prototype.allow = function(role, resource, action)
+{
+
+	if (typeof this.roles[role] == 'undefined') {
+		throw new Error('This is an exception');
+	}
+
+	if (typeof this.list[role] == 'undefined') {
+		this.list[role] = {};
+	};
+
+	if (typeof this.list[role][resource] == 'undefined') {
+		this.list[role][resource] = {};
+	};
+
+	this.list[role][resource][action] = 1;
+
+	return this;
+};
+
+Acl.prototype.allowed = function(role, resource, action)
+{
+
+	if (typeof this.list[role] == 'undefined') {
+		return false;
+	};
+
+	if (typeof this.list[role][resource] == 'undefined') {
+		return false;
+	};
+
+	if (typeof this.list[role][resource][action] == 'undefined') {
+		return false;
+	}
+
+	return this.list[role][resource][action];
+};

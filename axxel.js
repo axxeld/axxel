@@ -13,9 +13,24 @@
 
 var axxel = {
 
-	createAcl: function(name)
+	_acls: {},
+
+	getAcl: function(name)
 	{
-		return new Acl(name);
+		if (typeof axxel._acls[name] != "undefined") {
+			return axxel._acls[name];
+		}
+		var acl = new Acl(name);
+		axxel._acls[name] = acl;
+		return acl;
+	},
+
+	isAcl: function(name)
+	{
+		if (typeof axxel._acls[name] != "undefined") {
+			return true;
+		}
+		return false;
 	}
 
 };

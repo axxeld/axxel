@@ -49,7 +49,7 @@ int loadScript(axxel_context *context, char *file_name)
 
 	fp = fopen(file_name, "r");
 	if (!fp) {
-		fprintf(stderr, "Cant open file\n");
+		fprintf(stderr, "Cant open file: %s\n", file_name);
 		return 0;
 	}
 
@@ -68,7 +68,8 @@ int loadScript(axxel_context *context, char *file_name)
 	program[i - 1] = '\0';
 	fclose(fp);
 
-	ok = JS_EvaluateScript(context->jsContext, JS_GetGlobalObject(context->jsContext), program, i -1, file_name, 1, &rval);
+	script = JS_CompileScript(context->jsContext, JS_GetGlobalObject(context->jsContext), program, i -1, file_name, 0);
+    JS_ExecuteScript(context->jsContext, JS_GetGlobalObject(context->jsContext), script, &rval);
 
 	free(program);
 }

@@ -15,6 +15,7 @@ function Roles(name){
 	this.name = name;
 };
 
-Roles.prototype.getName = function(){
+Roles.prototype.getName = function()
+{
 	return this.name;
 };
