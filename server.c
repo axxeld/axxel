@@ -52,7 +52,6 @@ void handle_read_cb(struct bufferevent *buffer_ev, void *ctx) {
 		evbuffer_add(output, SL("\n"));
 		free(line);
 		json_object_put(response);
-		break;
 	}
 
 }

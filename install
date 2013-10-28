@@ -1,19 +1,20 @@
 #!/bin/bash
 
-if [ ! -d mozilla ]; then
-	mkdir mozilla
-	cd mozilla
-	wget http://ftp.mozilla.org/pub/mozilla.org/js/js185-1.0.0.tar.gz
-	tar xzf js185-1.0.0.tar.gz
-	rm -f js185-1.0.0.tar.gz
-	cd js-1.8.5/js/src
-	autoconf2.13
-	make
-	sudo make install
-	sudo make clean
-	cd ../../../..
-	mv mozilla/js-1.8.5 mozilla/js
-fi
+#if [ ! -d mozilla ]; then
+#	mkdir mozilla
+#	cd mozilla
+#	wget http://ftp.mozilla.org/pub/mozilla.org/js/js185-1.0.0.tar.gz
+#	tar xzf js185-1.0.0.tar.gz
+#	rm -f js185-1.0.0.tar.gz
+#	cd js-1.8.5/js/src
+#	autoconf2.13
+#	./configure
+#	make
+#	sudo make install
+#	sudo make clean
+#	cd ../../../..
+#	mv mozilla/js-1.8.5 mozilla/js
+#fi
 
 if [ ! -d libevent ]; then
 	mkdir libevent
@@ -27,4 +28,4 @@ if [ ! -d libevent ]; then
 	cd ../..
 fi
 
-gcc -Wl,-rpath /usr/local/lib -I/opt/local/include -I/usr/local/include -L/opt/local/lib -L/usr/local/lib -g3 axxel.c logger.c protocol.c response.c server.c hash.c -o axxel -lmozjs185 -levent -ljson-c
+gcc -Wl,-rpath /usr/local/lib -I/usr/local/include/js -I/opt/local/include -I/usr/local/include -L/opt/local/lib -L/usr/local/lib -g3 axxel.c logger.c protocol.c response.c server.c hash.c -o axxel -lmozjs185 -levent -ljson-c

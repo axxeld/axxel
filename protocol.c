@@ -24,15 +24,19 @@ json_object *execute_proto(axxel_context *context, char *cmd, size_t n) {
 
 	json_object *response;
 	JSBool ok;
-    jsval rval;
-    JSObject *script;
-    JSString* u16_txt;
-    unsigned int length;
-    char *txt;
+	jsval rval;
+	JSObject *script;
+	JSString* u16_txt;
+	unsigned int length;
+	char *txt;
 
-    fprintf(stderr, "%s\n", cmd);
+	fprintf(stderr, "%s\n", cmd);
+
+	JS_BeginRequest(context->jsContext);
 
 	ok = JS_EvaluateScript(context->jsContext, JS_GetGlobalObject(context->jsContext), cmd, strlen(cmd), "TEST", 1, &rval);
+
+	JS_EndRequest(context->jsContext);
 
 	if (ok) {
 

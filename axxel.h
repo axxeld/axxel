@@ -14,7 +14,7 @@
 #ifndef HAVE_AXXEL_H
 #define HAVE_AXXEL_H 1
 
-#include "mozilla/js/js/src/jsapi.h"
+#include "jsapi.h"
 #include "json-c/json.h"
 
 #define SL(ch) ch, sizeof(ch)-1

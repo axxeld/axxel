@@ -15,9 +15,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "mozilla/js/js/src/jsapi.h"
-#include "json/json.h"
-
 #include "hash.h"
 
 #include "axxel.h"
@@ -37,41 +34,14 @@ void reportError(JSContext *cx, const char *message, JSErrorReport *report)
 	fprintf(stderr, "%s:%u:%s\n", report->filename ? report->filename : "<no filename>", (unsigned int) report->lineno, message);
 }
 
-int loadScript(axxel_context *context, char *file_name)
+int loadScript(axxel_context *context, const char *file_name)
 {
-	FILE *fp;
-	char ch;
-	char *program;
-	int i, length;
-	JSBool ok;
+
     jsval rval;
     JSObject *script;
 
-	fp = fopen(file_name, "r");
-	if (!fp) {
-		fprintf(stderr, "Cant open file: %s\n", file_name);
-		return 0;
-	}
-
-	length = 1024;
-	program = malloc(sizeof(char) * length);
-
-	i = 0;
-	while (!feof(fp)) {
-		ch = fgetc(fp);
-		if (i == length) {
-			length += 1024;
-			program = realloc(program, sizeof(char) * length);
-		}
-		program[i++] = ch;
-	}
-	program[i - 1] = '\0';
-	fclose(fp);
-
-	script = JS_CompileScript(context->jsContext, JS_GetGlobalObject(context->jsContext), program, i -1, file_name, 0);
+    script = JS_CompileFile(context->jsContext, JS_GetGlobalObject(context->jsContext), file_name);
     JS_ExecuteScript(context->jsContext, JS_GetGlobalObject(context->jsContext), script, &rval);
-
-	free(program);
 }
 
 int main(int argc, char **argv) {

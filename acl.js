@@ -26,6 +26,11 @@ function Acl(name){
 	this.list = {};
 };
 
+Acl.prototype.setDefaultAction = function(action)
+{
+	this.defaultAction = action;
+};
+
 Acl.prototype.getName = function()
 {
 	return this.name;
@@ -102,14 +107,33 @@ Acl.prototype.allow = function(role, resource, action)
 		this.list[role][resource] = {};
 	};
 
-	this.list[role][resource][action] = 1;
+	this.list[role][resource][action] = true;
 
 	return this;
 };
 
-Acl.prototype.allowed = function(role, resource, action)
+Acl.prototype.deny = function(role, resource, permission)
 {
 
+	if (typeof this.roles[role] == 'undefined') {
+		throw new Error('This is an exception');
+	}
+
+	if (typeof this.list[role] == 'undefined') {
+		this.list[role] = {};
+	};
+
+	if (typeof this.list[role][resource] == 'undefined') {
+		this.list[role][resource] = {};
+	};
+
+	this.list[role][resource][permission] = false;
+
+	return this;
+};
+
+Acl.prototype.checkPermission = function(role, resource, permission)
+{
 	if (typeof this.list[role] == 'undefined') {
 		return false;
 	};
@@ -118,9 +142,21 @@ Acl.prototype.allowed = function(role, resource, action)
 		return false;
 	};
 
-	if (typeof this.list[role][resource][action] == 'undefined') {
+	if (typeof this.list[role][resource][permission] == 'undefined') {
 		return false;
 	}
 
-	return this.list[role][resource][action];
+	return this.list[role][resource][permission];
+};
+
+Acl.prototype.allowed = function(role, resource, permission)
+{
+	if (typeof permission == 'array') {
+		var allowed = true;
+		for (var i = 0; i <= permission.length; i++) {
+			this.checkPermission(role, resource, permission);
+		}
+	} else {
+		return this.checkPermission(role, resource, permission);
+	}
 };
