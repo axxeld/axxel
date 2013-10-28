@@ -42,11 +42,31 @@ cd libevent-2.0.18-stable
 sudo make install
 ```
 
-* [json-c](https://github.com/json-c/json-c)
+[json-c](https://github.com/json-c/json-c)
+
+```sh
+wget https://github.com/json-c/json-c/archive/master.zip
+./configure
+make
+make install
+```
 
 ### Installation
 Once requirements are installed use the following command:
 
 ```sh
 ./install
+```
+
+### Usage
+You can execute the daemon as follows:
+
+```sh
+./axxeld
+```
+
+Setting a port:
+
+```sh
+./axxeld -p 50001
 ```

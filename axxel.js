@@ -21,7 +21,7 @@ var axxel = {
 			return axxel._acls[name];
 		}
 
-		print("Creating ACL...");
+		print("Creating ACL " + name);
 
 		var acl = new Acl(name);
 		axxel._acls[name] = acl;

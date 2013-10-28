@@ -11,4 +11,4 @@
  * Authors: Andres Gutierrez <andres@phalconphp.com>
  */
 
-int start_server(axxel_context *context);
+int start_server(axxel_context *context, char *listen_addr, char *port_str);

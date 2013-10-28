@@ -28,4 +28,4 @@
 #	cd ../..
 #fi
 
-gcc -Wl,-rpath /usr/local/lib -I/usr/local/include/js -I/opt/local/include -I/usr/local/include -L/opt/local/lib -L/usr/local/lib -g3 axxel.c logger.c protocol.c response.c server.c hash.c -o axxel -lmozjs185 -levent -ljson-c
+gcc -Wl,-rpath /usr/local/lib -I/usr/local/include/js -I/opt/local/include -I/usr/local/include -L/opt/local/lib -L/usr/local/lib -g3 axxel.c logger.c protocol.c response.c server.c hash.c -o axxeld -lmozjs185 -levent -ljson-c

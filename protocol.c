@@ -30,12 +30,10 @@ json_object *execute_proto(axxel_context *context, char *cmd, size_t n) {
 	unsigned int length;
 	char *txt;
 
-	fprintf(stderr, "%s\n", cmd);
+	//fprintf(stderr, "%s\n", cmd);
 
 	JS_BeginRequest(context->jsContext);
-
 	ok = JS_EvaluateScript(context->jsContext, JS_GetGlobalObject(context->jsContext), cmd, strlen(cmd), "TEST", 1, &rval);
-
 	JS_EndRequest(context->jsContext);
 
 	if (ok) {
@@ -65,7 +63,7 @@ json_object *execute_proto(axxel_context *context, char *cmd, size_t n) {
 
 			u16_txt = JSVAL_TO_STRING(rval);
 			length = JS_GetStringEncodingLength(context->jsContext, u16_txt);
-			txt = malloc(sizeof(char)*(length + 1));
+			txt = malloc(sizeof(char) * (length + 1));
 			JS_EncodeStringToBuffer(u16_txt, txt, length);
 
 			response = json_object_new_object();

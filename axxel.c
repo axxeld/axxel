@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "hash.h"
 
@@ -33,8 +34,8 @@ static JSClass global_class =
 
 static JSFunctionSpec myjs_global_functions[] =
 {
-    JS_FS("print",   js_print,   1, 0),
-    JS_FS_END
+	JS_FS("print",   js_print,   1, 0),
+	JS_FS_END
 };
 
 void reportError(JSContext *cx, const char *message, JSErrorReport *report)
@@ -44,37 +45,55 @@ void reportError(JSContext *cx, const char *message, JSErrorReport *report)
 
 JSBool js_print(JSContext *cx, uintN argc, jsval *vp)
 {
-    JSString* u16_txt;
-    unsigned int length;
-    char *txt;
+	JSString* u16_txt;
+	unsigned int length;
+	char *txt;
 
-    if (!JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "S", &u16_txt))
-        return JS_FALSE;
+	if (!JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "S", &u16_txt)) {
+		return JS_FALSE;
+	}
 
-    length = JS_GetStringEncodingLength(cx, u16_txt);
-    txt = alloca(sizeof(char)*(length + 1));
-    JS_EncodeStringToBuffer(u16_txt, txt, length);
+	length = JS_GetStringEncodingLength(cx, u16_txt);
+	txt = alloca(sizeof(char)*(length + 1));
+	JS_EncodeStringToBuffer(u16_txt, txt, length);
 
-    printf("%.*s\n", length, txt);
+	printf("%.*s\n", length, txt);
 
-    //free(txt);
-    return JS_TRUE;
+	//free(txt);
+	return JS_TRUE;
 }
 
 int loadScript(axxel_context *context, const char *file_name)
 {
 
-    jsval rval;
-    JSObject *script;
+	jsval rval;
+	JSObject *script;
 
-    script = JS_CompileFile(context->jsContext, JS_GetGlobalObject(context->jsContext), file_name);
-    JS_ExecuteScript(context->jsContext, JS_GetGlobalObject(context->jsContext), script, &rval);
+	script = JS_CompileFile(context->jsContext, JS_GetGlobalObject(context->jsContext), file_name);
+	JS_ExecuteScript(context->jsContext, JS_GetGlobalObject(context->jsContext), script, &rval);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
 
 	/* JS variables. */
+	char *host = NULL, *port = NULL;
 	axxel_context *context;
+	int opt;
+
+	while ((opt = getopt(argc, argv, "p:h:")) != -1) {
+		switch (opt) {
+			case 'h':
+				host = optarg;
+				break;
+			case 'p':
+				port = optarg;
+				break;
+			default:
+				fprintf(stderr, "Usage: %s -h host -p port\n", argv[0]);
+				exit(EXIT_FAILURE);
+		}
+	}
 
 	/* Create an Axxel Context */
 	context = malloc(sizeof(axxel_context));
@@ -120,7 +139,7 @@ int main(int argc, char **argv) {
 	loadScript(context, "resources.js");
 	loadScript(context, "axxel.js");
 
-	start_server(context);
+	start_server(context, host, port);
 	return 0;
 }
 

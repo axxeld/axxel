@@ -90,23 +90,24 @@ void accept_error_cb(struct evconnlistener *listener, void *ctx)
 /**
  * Starts the network server
  */
-int start_server(axxel_context *context)
+int start_server(axxel_context *context, char *listen_addr, char *port_str)
 {
 
 	struct event_base *base;
 	struct evconnlistener *listener;
 	struct sockaddr_in sin;
 	struct sockaddr_un sun;
+	int port;
 
-	int port = 1589;
-
-	/*if (argc > 1) {
-		port = atoi(argv[1]);
-	}*/
+	if (!port_str) {
+		port = 1589;
+	} else {
+		port = atoi(port_str);
+	}
 
 	base = event_base_new();
 	if (!base) {
-		puts("base error");
+		fprintf(stderr, "Libevent base error\n", port);
 		return 1;
 	}
 
@@ -130,6 +131,9 @@ int start_server(axxel_context *context)
 		perror("can't create listener");
 		return 1;
 	}
+
+	fprintf(stderr, "Listening for connections on %d\n", port);
+
 	evconnlistener_set_error_cb(listener, accept_error_cb);
 
 	event_base_dispatch(base);
