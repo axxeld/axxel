@@ -68,10 +68,14 @@ void handle_event_cb(struct bufferevent *bev, short events, void *ctx)
 
 void accept_connection_cb(struct evconnlistener *listener, evutil_socket_t fd, struct sockaddr *address, int socklen, void *ctx)
 {
+	struct sockaddr_in *their_inaddr_ptr;
 	struct event_base *base = evconnlistener_get_base(listener);
 	struct bufferevent *bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE);
 
-	//fprintf(stderr, "%s\n", address->s_addr);
+	if (address->sa_family == AF_INET) {
+		their_inaddr_ptr = (struct sockaddr_in *) address;
+		fprintf(stderr, "Accepting connection from %s\n", inet_ntoa(their_inaddr_ptr->sin_addr));
+	}
 
 	bufferevent_setcb(bev, handle_read_cb, NULL, handle_event_cb, ctx);
 
@@ -128,7 +132,7 @@ int start_server(axxel_context *context, char *listen_addr, char *port_str)
 
 	listener = evconnlistener_new_bind(base, accept_connection_cb, context, LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1, (struct sockaddr*)&sin, sizeof(sin));
 	if (!listener) {
-		perror("can't create listener");
+		fprintf(stderr, "Can't create listener on %d\n", port);
 		return 1;
 	}
 
