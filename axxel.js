@@ -20,6 +20,9 @@ var axxel = {
 		if (typeof axxel._acls[name] != "undefined") {
 			return axxel._acls[name];
 		}
+
+		print("Creating ACL...");
+
 		var acl = new Acl(name);
 		axxel._acls[name] = acl;
 		return acl;

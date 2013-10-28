@@ -92,11 +92,10 @@ Acl.prototype.isResource = function(name)
 	return typeof this.resources[name] != "undefined";
 };
 
-Acl.prototype.allow = function(role, resource, action)
+Acl.prototype.grant = function(role, resource, permission, action)
 {
-
 	if (typeof this.roles[role] == 'undefined') {
-		throw new Error('This is an exception');
+		throw new Error('Role "' + role + '" does not exist');
 	}
 
 	if (typeof this.list[role] == 'undefined') {
@@ -107,42 +106,50 @@ Acl.prototype.allow = function(role, resource, action)
 		this.list[role][resource] = {};
 	};
 
-	this.list[role][resource][action] = true;
+	if (typeof permission == 'object') {
+		for (var i = 0; i < permission.length; i++) {
+			this.list[role][resource][permission[i]] = action;
+		}
+		return;
+	}
 
+	this.list[role][resource][permission] = action;
+};
+
+Acl.prototype.allow = function(role, resource, permission)
+{
+	this.grant(role, resource, permission, true);
 	return this;
 };
 
 Acl.prototype.deny = function(role, resource, permission)
 {
-
-	if (typeof this.roles[role] == 'undefined') {
-		throw new Error('This is an exception');
-	}
-
-	if (typeof this.list[role] == 'undefined') {
-		this.list[role] = {};
-	};
-
-	if (typeof this.list[role][resource] == 'undefined') {
-		this.list[role][resource] = {};
-	};
-
-	this.list[role][resource][permission] = false;
-
+	this.grant(role, resource, permission, false);
 	return this;
 };
 
 Acl.prototype.checkPermission = function(role, resource, permission)
 {
+	if (typeof permission != "string") {
+		print("not here (0)");
+		return false;
+	}
+
 	if (typeof this.list[role] == 'undefined') {
+		print("not here (1)");
 		return false;
 	};
 
 	if (typeof this.list[role][resource] == 'undefined') {
+		print("not here (2)");
 		return false;
 	};
 
 	if (typeof this.list[role][resource][permission] == 'undefined') {
+		if (typeof this.list[role][resource]['*'] != 'undefined') {
+			return this.list[role][resource]['*'];
+		}
+		print("not here (3)");
 		return false;
 	}
 
@@ -151,12 +158,13 @@ Acl.prototype.checkPermission = function(role, resource, permission)
 
 Acl.prototype.allowed = function(role, resource, permission)
 {
-	if (typeof permission == 'array') {
+	if (typeof permission == 'object') {
 		var allowed = true;
-		for (var i = 0; i <= permission.length; i++) {
-			this.checkPermission(role, resource, permission);
+		for (var i = 0; i < permission.length; i++) {
+			allowed = this.checkPermission(role, resource, permission[i]) && allowed;
 		}
-	} else {
-		return this.checkPermission(role, resource, permission);
+		return allowed;
 	}
+	return this.checkPermission(role, resource, permission);
 };
+

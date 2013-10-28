@@ -20,6 +20,8 @@
 #include "axxel.h"
 #include "protocol.h"
 
+JSBool js_print(JSContext *cx, uintN argc, jsval *vp);
+
 static JSClass global_class =
 {
 	"global", JSCLASS_GLOBAL_FLAGS,
@@ -29,9 +31,34 @@ static JSClass global_class =
 	JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
+static JSFunctionSpec myjs_global_functions[] =
+{
+    JS_FS("print",   js_print,   1, 0),
+    JS_FS_END
+};
+
 void reportError(JSContext *cx, const char *message, JSErrorReport *report)
 {
 	fprintf(stderr, "%s:%u:%s\n", report->filename ? report->filename : "<no filename>", (unsigned int) report->lineno, message);
+}
+
+JSBool js_print(JSContext *cx, uintN argc, jsval *vp)
+{
+    JSString* u16_txt;
+    unsigned int length;
+    char *txt;
+
+    if (!JS_ConvertArguments(cx, argc, JS_ARGV(cx, vp), "S", &u16_txt))
+        return JS_FALSE;
+
+    length = JS_GetStringEncodingLength(cx, u16_txt);
+    txt = alloca(sizeof(char)*(length + 1));
+    JS_EncodeStringToBuffer(u16_txt, txt, length);
+
+    printf("%.*s\n", length, txt);
+
+    //free(txt);
+    return JS_TRUE;
 }
 
 int loadScript(axxel_context *context, const char *file_name)
@@ -73,14 +100,18 @@ int main(int argc, char **argv) {
 	/* Create the global object in a new compartment. */
 	context->global = JS_NewCompartmentAndGlobalObject(context->jsContext, &global_class, NULL);
 	if (context->global == NULL) {
+		fprintf(stderr, "Cannot register new compartment\n");
 		return -1;
 	}
 
-	//if (!JS_DefineFunctions(cx, global, myjs_global_functions))
-	  //  return JS_FALSE;
+	if (!JS_DefineFunctions(context->jsContext, context->global, myjs_global_functions)) {
+		fprintf(stderr, "Cannot register custom functions\n");
+		return -1;
+	}
 
 	/* Populate the global object with the standard globals, like Math, Object and Array. */
 	if (!JS_InitStandardClasses(context->jsContext, context->global)) {
+		fprintf(stderr, "Cannot register standard objects\n");
 		return -1;
 	}
 

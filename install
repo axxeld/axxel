@@ -16,16 +16,16 @@
 #	mv mozilla/js-1.8.5 mozilla/js
 #fi
 
-if [ ! -d libevent ]; then
-	mkdir libevent
-	cd libevent
-	wget http://github.com/downloads/libevent/libevent/libevent-2.0.18-stable.tar.gz
-	tar -xzvf libevent-2.0.18-stable.tar.gz
-	cd libevent-2.0.18-stable
-	./configure
-	sudo make install
-	sudo make clean
-	cd ../..
-fi
+#if [ ! -d libevent ]; then
+#	mkdir libevent
+#	cd libevent
+#	wget http://github.com/downloads/libevent/libevent/libevent-2.0.18-stable.tar.gz
+#	tar -xzvf libevent-2.0.18-stable.tar.gz
+#	cd libevent-2.0.18-stable
+#	./configure
+#	sudo make install
+#	sudo make clean
+#	cd ../..
+#fi
 
 gcc -Wl,-rpath /usr/local/lib -I/usr/local/include/js -I/opt/local/include -I/usr/local/include -L/opt/local/lib -L/usr/local/lib -g3 axxel.c logger.c protocol.c response.c server.c hash.c -o axxel -lmozjs185 -levent -ljson-c
