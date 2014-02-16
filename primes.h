@@ -3,7 +3,7 @@
  *
  * Axxel - Acl memory caching
  *
- * Copyright (c) 2013 Axxel Team
+ * Copyright (c) 2013-2014 Axxel Team
  *
  * Use and distribution licensed under the MIT license.
  * See the LICENSE file for full text.
